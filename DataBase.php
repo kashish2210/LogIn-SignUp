@@ -48,7 +48,12 @@ class DataBase
                 $login = true;
             } else $login = false;
         } else $login = false;
-
+        if ($dbusername == $username && password_verify($password, $dbpassword)) {
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['fullname'] = $row['fullname'];
+            $_SESSION['email'] = $row['email'];
+            $login = true;
+        }
         return $login;
     }
 
