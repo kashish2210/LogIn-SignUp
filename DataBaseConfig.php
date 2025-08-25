@@ -5,8 +5,12 @@ class DataBaseConfig
 
     public function __construct()
     {
-        // Use the Internal URL for apps running on Render (faster & secure)
-        $this->conn_string = "postgresql://loginsample_user:Y8SRQWascB2kZpHfq4gIX1Hnpcdt7TH0@dpg-d2mbva1r0fns73d03840-a/loginsample";
+        // Load from environment variable
+        $this->conn_string = getenv("DATABASE_URL");
+
+        if (!$this->conn_string) {
+            die("Database connection string not found. Please set DATABASE_URL.");
+        }
     }
 }
 ?>

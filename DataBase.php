@@ -15,25 +15,27 @@ class DataBase
     function dbConnect()
     {
         $this->connect = pg_connect($this->conn_string);
+        if (!$this->connect) {
+            die("Database connection failed: " . pg_last_error());
+        }
         return $this->connect;
     }
 
     function prepareData($data)
     {
-        return pg_escape_string($this->connect, htmlspecialchars($data));
+        return htmlspecialchars(trim($data));
     }
 
     function logIn($table, $username, $password)
     {
         $username = $this->prepareData($username);
-        $query = "SELECT * FROM $table WHERE username = '$username'";
-        $result = pg_query($this->connect, $query);
-        $row = pg_fetch_assoc($result);
 
-        if ($row) {
-            $dbusername = $row['username'];
-            $dbpassword = $row['password'];
-            if ($dbusername == $username && password_verify($password, $dbpassword)) {
+        // ✅ safer query
+        $query = "SELECT username, password FROM $table WHERE username = $1 LIMIT 1";
+        $result = pg_query_params($this->connect, $query, [$username]);
+
+        if ($result && $row = pg_fetch_assoc($result)) {
+            if (password_verify($password, $row['password'])) {
                 return true;
             }
         }
@@ -43,13 +45,19 @@ class DataBase
     function signUp($table, $fullname, $email, $username, $password)
     {
         $fullname = $this->prepareData($fullname);
+        $email    = $this->prepareData($email);
         $username = $this->prepareData($username);
-        $email = $this->prepareData($email);
         $password = password_hash($this->prepareData($password), PASSWORD_DEFAULT);
 
         $query = "INSERT INTO $table (fullname, username, password, email) 
-                  VALUES ('$fullname', '$username', '$password', '$email')";
-        return pg_query($this->connect, $query) ? true : false;
+                  VALUES ($1, $2, $3, $4)";
+        $result = pg_query_params($this->connect, $query, [$fullname, $username, $password, $email]);
+
+        if (!$result) {
+            error_log("Signup error: " . pg_last_error($this->connect));
+            return false;
+        }
+        return true;
     }
 }
 ?>
