@@ -164,4 +164,99 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             margin-bottom: 1rem;
             text-align: center;
             font-size: 0.9rem;
-            border: 1
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .back-link a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: white;
+        }
+
+        .security-notice {
+            background: rgba(52, 152, 219, 0.2);
+            color: #74b9ff;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            text-align: center;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="admin-badge">🛡️ ADMIN ACCESS</div>
+            <h1>🏥 HealthCare+ Admin</h1>
+            <p>Secure administration panel</p>
+        </div>
+
+        <?php if (!empty($error)): ?>
+            <div class="error-message">
+                ⚠️ <?php echo htmlspecialchars($error); ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="username">👤 Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter admin username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">🔐 Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter admin password" required>
+            </div>
+
+            <button type="submit" class="login-btn">
+                🚀 Login to Admin Panel
+            </button>
+        </form>
+
+        <div class="security-notice">
+            🔒 This is a secure area. All login attempts are monitored and logged.
+        </div>
+
+        <div class="back-link">
+            <a href="../index.php">← Back to Main Website</a>
+        </div>
+    </div>
+
+    <script>
+        // Simple form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !password) {
+                e.preventDefault();
+                alert('Please fill in all fields');
+            }
+        });
+
+        // Focus on username field when page loads
+        window.addEventListener('load', function() {
+            document.getElementById('username').focus();
+        });
+    </script>
+</body>
+</html>
