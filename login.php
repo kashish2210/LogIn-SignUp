@@ -1,39 +1,21 @@
 <?php
 session_start();
-require "../DataBase.php";
-
-// Redirect if already logged in as admin
-if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
-    header("Location: dashboard.php");
-    exit();
-}
+require "DataBase.php";
 
 $db = new DataBase();
-$error = '';
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (isset($_POST['username']) && isset($_POST['password'])) {
         if ($db->dbConnect()) {
-            $username = $db->prepareData($_POST['username']);
-            
-            // Query admin table instead of users
-            $query = "SELECT username, password FROM admin WHERE username = $1 AND is_active = true LIMIT 1";
-            $result = pg_query_params($db->connect, $query, [$username]);
-            
-            if ($result && $row = pg_fetch_assoc($result)) {
-                if (password_verify($_POST['password'], $row['password'])) {
-                    $_SESSION['admin_logged_in'] = true;
-                    $_SESSION['admin_username'] = $username;
-                    header("Location: dashboard.php");
-                    exit();
-                } else {
-                    $error = "Invalid username or password";
-                }
+            if ($db->logIn("users", $_POST['username'], $_POST['password'])) {
+                $_SESSION['username'] = $_POST['username'];
+                header("Location: dashboard.php");
+                exit();
             } else {
-                $error = "Invalid username or password";
+                $error = "Username or Password wrong";
             }
         } else {
-            $error = "Database connection failed";
+            $error = "Error: Database connection";
         }
     } else {
         $error = "All fields are required";
@@ -43,125 +25,52 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - HealthCare+</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .login-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 3rem;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .login-header h1 {
-            color: white;
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .login-header p {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
-        }
-
-        .admin-badge {
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-            color: white;
-            padding: 0.3rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            display: inline-block;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            color: white;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 1rem;
-            border: none;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .form-group input:focus {
-            outline: none;
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 1rem;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 1rem;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4);
-        }
-
-        .login-btn:active {
-            transform: translateY(0);
-        }
-
-        .error-message {
-            background: rgba(231, 76, 60, 0.2);
-            color: #ff6b6b;
-            padding: 0.8rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            text-align: center;
-            font-size: 0.9rem;
-            border: 1
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <style>
+    body {
+      margin:0; height:100vh; display:flex; justify-content:center; align-items:center;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+    }
+    .glass {
+      background: rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 40px;
+      width: 320px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    h2 { color: #fff; margin-bottom: 20px; }
+    input {
+      width: 100%; padding: 12px; margin: 10px 0;
+      border: none; border-radius: 10px;
+      outline: none; font-size: 16px;
+    }
+    button {
+      width: 100%; padding: 12px;
+      border: none; border-radius: 10px;
+      background: rgba(255,255,255,0.25);
+      color: #fff; font-size: 16px; cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover { background: rgba(255,255,255,0.4); }
+    .error { color: #ffcccc; font-size: 14px; }
+    a { color: #fff; text-decoration: none; display:block; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div class="glass">
+    <h2>🔑 Login</h2>
+    <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
+    <form method="post">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <a href="signup.php">Create an account →</a>
+  </div>
+</body>
+</html>
